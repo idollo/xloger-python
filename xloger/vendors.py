@@ -20,7 +20,7 @@ class FlaskXLoger(XLogerBase):
         host = app.config.get('{0}_HOST'.format(self.config_prefix), "localhost")
         port = app.config.get('{0}_PORT'.format(self.config_prefix), "19527")
         backend = app.config.get('{0}_FILTER_BACKEND'.format(self.config_prefix), "file:///tmp/xloger.filter")
-        self.client.config(host, port, backend)
+        self.client.config(host, port, filter_backend=backend)
         that = self
 
         @app.before_request
