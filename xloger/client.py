@@ -82,8 +82,8 @@ class XLogerClient(object):
 
     @classmethod
     def send(cls, data):
-        conn = cls.pool.get(host=cls.host, port=cls.port)
         try:
+            conn = cls.pool.get(host=cls.host, port=cls.port)
             conn.sendall(data)
         except Exception, e:
             print "XLoger push failed. %s" % e
