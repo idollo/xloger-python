@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='xloger',
-    version="1.0.1",
+    version="1.1.0",
     url='https://github.com/idollo/xloger-python.git',
     license='MIT',
     author='idollo',
@@ -13,13 +13,12 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=[],
+    install_requires=[
+        "socketpool>=0.5.3"
+    ],
     classifiers=[
-        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

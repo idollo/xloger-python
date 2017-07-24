@@ -11,15 +11,13 @@ import warnings
 import os
 import tempfile
 
+
 class XLogerConnector(TcpConnector):
     def sendall(self, data, flags=0):
         return self._s.send(data, flags)
 
     pass
 
-
-tmpdir = tempfile.gettempdir()
-filter_file_name = os.path.join(tempfile.gettempdir(), "xloger_filter.tmp")
 
 class XLogerClient(object):
     """
@@ -28,30 +26,27 @@ class XLogerClient(object):
     host = None
     port = None
     pool = None
-    filter = dict()
+    filter_backend = None
 
     @classmethod
-    def config(cls, host="localhost", port=19100, factory=XLogerConnector):
+    def config(cls, host="localhost", port=19100, factory=XLogerConnector, filter_backend='file:///tmp/xloger.filter'):
         cls.host = host
         cls.port = port
         cls.pool = ConnectionPool(factory=factory)
-
-        pid = os.fork()
-        if pid == 0:
-            pass
-        else:
-           cls.fork_reciever(host, port)
+        cls.filter_backend = filter_backend
 
     @classmethod
-    def fork_reciever(cls, host, port, retry=0):
+    def start_filter_worker(cls, host, port, filter_backend='file:///tmp/xloger.filter', retry=0):
+
         try:
             receiver = socket.create_connection((host, port))
         except socket.error, (code, message):
             warnings.warn("Connect to XLoger Server Failed: [%s] %s" % (code, message))
             sleep(3)
-            cls.fork_reciever(host, port, retry+1)
+            cls.start_filter_worker(host, port, filter_backend, retry+1)
             return
 
+        cls.filter_backend = filter_backend
         # non-blocking
         receiver.setblocking(0)
         data = dict(action="register", data=dict(duplex=True, reciever=True))
@@ -60,7 +55,7 @@ class XLogerClient(object):
         def reconnect():
             receiver.close()
             sleep(3)
-            cls.fork_reciever(host, port)
+            cls.start_filter_worker(host, port, filter_backend)
 
         while True:
             try:
@@ -114,20 +109,24 @@ class XLogerClient(object):
         action = getattr(cls, "dispatch_"+action, None)
         callable(action) and action(data)
 
-
-
     @classmethod
     def dispatch_filter(cls, filter):
-        f = open(filter_file_name, "w+")
-        f.write(json.dumps(filter))
-        f.close()
+        backend = cls.filter_backend
+        if backend.startswith("file://"):
+            filter_file_name = backend[7:]
+            f = open(filter_file_name, "w+")
+            f.write(json.dumps(filter))
+            f.close()
 
     @classmethod
     def filter(cls):
-        f = open(filter_file_name, 'r+')
-        data = f.read()
-        if data:
-            return json.loads(data)
+        backend = cls.filter_backend
+        if backend.startswith("file://"):
+            filter_file_name = backend[7:]
+            f = open(filter_file_name, 'r+')
+            data = f.read()
+            if data:
+                return json.loads(data)
         return dict()
 
 
