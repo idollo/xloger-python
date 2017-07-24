@@ -39,13 +39,7 @@ class FlaskXLoger(XLogerBase):
     def log(self, *args):
         if not self.is_watched():
             return
-        return self.trace('log', self.traceback_point(*args))
-
-    def warning(self, *args):
-        return self.trace('warning', self.traceback_point(*args))
-
-    def error(self, *args):
-        return self.trace('error', self.traceback_point(*args))
+        return self.traceback('log', self.traceback_point(*args))
 
     def thread_data(self):
         headers = request.headers
