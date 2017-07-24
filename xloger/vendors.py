@@ -41,8 +41,8 @@ class FlaskXLoger(XLogerBase):
             return
         return self.trace('log', self.__traceback_point(*args))
 
-    def warnning(self, *args):
-        return self.trace('warnning', self.__traceback_point(*args))
+    def warning(self, *args):
+        return self.trace('warning', self.__traceback_point(*args))
 
     def error(self, *args):
         return self.trace('error', self.__traceback_point(*args))

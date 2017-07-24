@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='xloger',
-    version="1.1.3",
+    version="1.1.4",
     url='https://github.com/idollo/xloger-python.git',
     license='MIT',
     author='idollo',

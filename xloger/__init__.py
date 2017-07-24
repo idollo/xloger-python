@@ -27,13 +27,13 @@ class XLogerBase(object):
         raise NotImplementedError()
 
     def log(self, *args):
-        return self.traceback('log', self.__traceback_point(*args))
+        return self.traceback('log', self.traceback_point(*args))
 
-    def warnning(self, *args):
-        return self.traceback('warnning', self.__traceback_point(*args))
+    def warning(self, *args):
+        return self.traceback('warning', self.traceback_point(*args))
 
     def error(self, *args):
-        return self.traceback('error', self.__traceback_point(*args))
+        return self.traceback('error', self.traceback_point(*args))
 
     def show_error(self, errtype, message, file, line):
         data = dict(
@@ -57,11 +57,11 @@ class XLogerBase(object):
         data.update(type=action)
         return self.client.push('trace', data)
 
-    def __traceback_point(self, *args):
+    def traceback_point(self, *args):
         tbs = extract_stack()
         tbs.reverse()
         for file, line, func, t in tbs[1:]:
-            if func.lower() in ('log','warnning', 'error'):
+            if func.lower() in ('log', 'warning', 'error'):
                 return dict(
                     file=file,
                     line=line,
