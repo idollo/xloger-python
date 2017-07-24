@@ -25,9 +25,9 @@ class FlaskXLoger(XLogerBase):
 
         @app.before_request
         def before_request():
-            request.xloger_thread = that.__thread()
+            request.xloger_thread = that.thread()
             request.xloger_time_start = time.time()
-            request.xloger_thread_data = that.__thread_data()
+            request.xloger_thread_data = that.thread_data()
             that.is_watched() and that.trace("threadStart", request.xloger_thread_data)
 
         @app.teardown_request
@@ -39,22 +39,22 @@ class FlaskXLoger(XLogerBase):
     def log(self, *args):
         if not self.is_watched():
             return
-        return self.trace('log', self.__traceback_point(*args))
+        return self.trace('log', self.traceback_point(*args))
 
     def warning(self, *args):
-        return self.trace('warning', self.__traceback_point(*args))
+        return self.trace('warning', self.traceback_point(*args))
 
     def error(self, *args):
-        return self.trace('error', self.__traceback_point(*args))
+        return self.trace('error', self.traceback_point(*args))
 
-    def __thread_data(self):
+    def thread_data(self):
         headers = request.headers
         return dict(
             thread=request.xloger_thread,
             timestamp=time.time(),
             host=headers.get("Host", "localhost"),
             userAgent=headers.get("User-Agent", "none"),
-            clientIP=self.__clientip(),
+            clientIP=self.clientip(),
             httpMethod=request.method,
             postData=request.data,
             requestURI=request.full_path,
@@ -62,7 +62,7 @@ class FlaskXLoger(XLogerBase):
         )
 
     @staticmethod
-    def __thread():
+    def thread():
         headers = request.headers
         thread = uuid.uuid1().hex
         super_thread = None
@@ -73,7 +73,7 @@ class FlaskXLoger(XLogerBase):
         return '_'.join([super_thread, thread]) if super_thread else thread
 
     @staticmethod
-    def __clientip():
+    def clientip():
         headers = request.headers
         for h in ("Client-IP", "X-Real-IP", "Remote-Addr"):
             ip = headers.get(h, None)
@@ -88,7 +88,7 @@ class FlaskXLoger(XLogerBase):
         if hasattr(request, "xloger_watched"):
             return request.xloger_watched
 
-        tdata = getattr(request, 'xloger_thread_data', self.__thread_data())
+        tdata = getattr(request, 'xloger_thread_data', self.thread_data())
         filter = self.client.filter()
         filters = filter.get("list", [])
         server_mention = filter.get("server_mention", False)
