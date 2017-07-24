@@ -60,12 +60,16 @@ class XLogerBase(object):
     def traceback_point(self, *args):
         tbs = extract_stack()
         tbs.reverse()
+        fetch = False
         for file, line, func, t in tbs[1:]:
-            if func.lower() in ('log', 'warning', 'error'):
+            if fetch:
                 return dict(
                     file=file,
                     line=line,
                     message=args[0] if len(args)>0 else "no-message",
                     args=args
                 )
+            if func.lower() in ('log', 'warning', 'error'):
+                fetch = True
+                continue
         return None
