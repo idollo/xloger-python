@@ -33,7 +33,7 @@ class FlaskXLoger(XLogerBase):
 
         @app.teardown_request
         def teardown_request(fn):
-            tdata = request.xloger_thread_data
+            tdata = getattr(request, 'xloger_thread_data', that.thread_data())
             tdata.update(duration=time.time()-request.xloger_time_start)
             that.is_watched() and that.trace("threadEnd", tdata)
 
