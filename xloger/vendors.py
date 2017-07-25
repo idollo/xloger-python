@@ -5,6 +5,7 @@ from .client import XLogerClient
 import time
 import uuid
 import re
+import urllib
 
 
 class FlaskXLoger(XLogerBase):
@@ -43,6 +44,12 @@ class FlaskXLoger(XLogerBase):
 
     def thread_data(self):
         headers = request.headers
+        post = ""
+        if request.content_type.lower()=='application/x-www-form-urlencoded':
+            post = urllib.urlencode(request.form)
+        else:
+            post = request.data
+
         return dict(
             thread=request.xloger_thread,
             timestamp=time.time(),
@@ -50,7 +57,7 @@ class FlaskXLoger(XLogerBase):
             userAgent=headers.get("User-Agent", "none"),
             clientIP=self.clientip(),
             httpMethod=request.method,
-            postData=request.data,
+            postData=post,
             requestURI=request.full_path,
             cookie=headers.get("Cookie", '')
         )
