@@ -45,7 +45,8 @@ class FlaskXLoger(XLogerBase):
     def thread_data(self):
         headers = request.headers
         post = ""
-        if request.content_type.lower()=='application/x-www-form-urlencoded':
+        content_type = getattr(request, 'content_type', None)
+        if content_type and content_type.lower() == 'application/x-www-form-urlencoded':
             post = urllib.urlencode(request.form)
         else:
             post = request.data
