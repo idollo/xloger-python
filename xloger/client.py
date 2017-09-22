@@ -9,7 +9,6 @@ import random
 import json
 import warnings
 import os
-import tempfile
 
 
 class XLogerConnector(TcpConnector):
@@ -116,20 +115,26 @@ class XLogerClient(object):
     def dispatch_filter(cls, filter):
         backend = cls.filter_backend
         if backend.startswith("file://"):
-            filter_file_name = backend[7:]
-            f = open(filter_file_name, "w+")
-            f.write(json.dumps(filter))
-            f.close()
+            try:
+                filter_file_name = backend[7:]
+                f = open(filter_file_name, "w+")
+                f.write(json.dumps(filter))
+                f.close()
+            except Exception, e:
+                warnings.warn("Failed to Write Xloger backend: %s" % e.message)
 
     @classmethod
     def filter(cls):
         backend = cls.filter_backend
         if backend.startswith("file://"):
             filter_file_name = backend[7:]
-            f = open(filter_file_name, 'r+')
-            data = f.read()
-            if data:
-                return json.loads(data)
+            try:
+                f = open(filter_file_name, 'r+')
+                data = f.read()
+                if data:
+                    return json.loads(data)
+            except Exception, e:
+                warnings.warn("Failed to read Xloger backend: %s" % e.message)
         return dict()
 
 
