@@ -71,7 +71,7 @@ class FlaskXLoger(XLogerBase):
         for hv, qv in (("XLoger-Thread", "xloger_thread"), ('Console-Thread', 'console_thread')):
             super_thread = headers.get(hv, request.values.get(qv, None))
             if super_thread is not None:
-                continue
+                break
         return '_'.join([super_thread, thread]) if super_thread else thread
 
     @staticmethod
