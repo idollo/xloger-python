@@ -4,7 +4,7 @@ from werkzeug.local import LocalStack, LocalProxy
 from traceback import extract_tb, extract_stack
 from sys import exc_info
 import json
-import time
+import time, datetime
 
 stacker = {"xloger": None}
 
@@ -13,6 +13,22 @@ def _lookup_(name):
     return stacker[name]
 
 xloger = LocalProxy(partial(_lookup_, "xloger"))
+
+
+def dumps_default(o):
+    if hasattr(o, '__json__') and callable(getattr(o, '__json__')):
+        return o.__json__()
+
+    if hasattr(o, '__dict__'):
+        return o.__dict__
+
+    if isinstance(o, datetime):
+        return o.strftime("%Y-%m-%d %H:%M:%S")
+
+    if isinstance(o, time):
+        return o.strftime("%H:%M:%S")
+
+    return "%s" % o
 
 
 class XLogerBase(object):
@@ -45,7 +61,7 @@ class XLogerBase(object):
         return self.traceback('error', data)
 
     def traceback(self, ttype, data):
-        fire = json.dumps(data)
+        fire = json.dumps(data, default=dumps_default)
         post = dict(
             type=ttype,
             fire=fire

@@ -39,8 +39,8 @@ class XLogerClient(object):
 
         try:
             receiver = socket.create_connection((host, port))
-        except socket.error, (code, message):
-            warnings.warn("Connect to XLoger Server Failed: [%s] %s" % (code, message))
+        except socket.error as err:
+            warnings.warn("Connect to XLoger Server Failed: [%s] %s" % (err[0], err[1]))
             sleep(3)
             cls.start_filter_worker(host, port, filter_backend, retry+1)
             return
@@ -59,7 +59,7 @@ class XLogerClient(object):
         while True:
             try:
                 line = receiver.makefile().readline()
-            except socket.error, e:
+            except socket.error as e:
                 err = e.args[0]
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(1)
@@ -74,7 +74,7 @@ class XLogerClient(object):
             else:
                 try:
                     receiver.send(json.dumps(data)+'\n')
-                except socket.error, e:
+                except socket.error as e:
                     if e.errno == errno.ECONNRESET:
                         reconnect()
                         break
@@ -84,8 +84,8 @@ class XLogerClient(object):
         try:
             conn = cls.pool.get(host=cls.host, port=cls.port)
             conn.sendall(data)
-        except Exception, e:
-            print "XLoger push failed. %s" % e
+        except Exception as e:
+            print("XLoger push failed. %s" % e)
 
     @classmethod
     def push(cls, action='log',  data=''):
@@ -120,7 +120,7 @@ class XLogerClient(object):
                 f = open(filter_file_name, "w+")
                 f.write(json.dumps(filter))
                 f.close()
-            except Exception, e:
+            except Exception as e:
                 warnings.warn("Failed to Write Xloger backend: %s" % e.message)
 
     @classmethod
@@ -133,7 +133,7 @@ class XLogerClient(object):
                 data = f.read()
                 if data:
                     return json.loads(data)
-            except Exception, e:
+            except Exception as e:
                 warnings.warn("Failed to read Xloger backend: %s" % e.message)
         return dict()
 

@@ -33,8 +33,10 @@ class FlaskXLoger(XLogerBase):
 
         @app.teardown_request
         def teardown_request(fn):
-            tdata = getattr(request, 'xloger_thread_data', that.thread_data())
-            tdata.update(duration=time.time()-request.xloger_time_start)
+            tdata = getattr(request, 'xloger_thread_data', None)
+            if not tdata:
+                return
+            tdata.update(duration=time.time()- getattr(request, "xloger_time_start", time.time()))
             that.is_watched() and that.trace("threadEnd", tdata)
 
     def log(self, *args):
@@ -52,7 +54,7 @@ class FlaskXLoger(XLogerBase):
             post = request.data
 
         return dict(
-            thread=request.xloger_thread,
+            thread=getattr(request, 'xloger_thread', self.thread()),
             timestamp=time.time(),
             host=headers.get("Host", "localhost"),
             userAgent=headers.get("User-Agent", "none"),
