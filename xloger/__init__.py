@@ -4,7 +4,7 @@ from werkzeug.local import LocalStack, LocalProxy
 from traceback import extract_tb, extract_stack
 from sys import exc_info
 import json
-import time, datetime
+from datetime import datetime, time
 
 stacker = {"xloger": None}
 
