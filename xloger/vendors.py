@@ -9,15 +9,18 @@ import urllib
 
 
 class FlaskXLoger(XLogerBase):
-    def __init__(self, app=None, config_prefix='XLOGER', **kwargs):
+    def __init__(self, app=None, config_prefix='XLOGER', disabled=False, **kwargs):
         self.client = XLogerClient
         self.provider_kwargs = kwargs
         self.config_prefix = config_prefix
+        self.disabled = disabled
         stacker['xloger'] = self
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app, **kwargs):
+        if self.disabled:
+            return
         host = app.config.get('{0}_HOST'.format(self.config_prefix), "localhost")
         port = app.config.get('{0}_PORT'.format(self.config_prefix), "19527")
         backend = app.config.get('{0}_FILTER_BACKEND'.format(self.config_prefix), "file:///tmp/xloger.filter")
@@ -89,6 +92,8 @@ class FlaskXLoger(XLogerBase):
         return request.remote_addr
 
     def is_watched(self):
+        if self.disabled:
+            return False
         if hasattr(request, "xloger_watched"):
             return request.xloger_watched
 
