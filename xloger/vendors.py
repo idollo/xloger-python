@@ -52,7 +52,7 @@ class FlaskXLoger(XLogerBase):
         post = ""
         content_type = getattr(request, 'content_type', None)
         if content_type and content_type.lower() == 'application/x-www-form-urlencoded':
-            post = urllib.urlencode(request.form)
+            post = dict(request.form.items())
         else:
             post = request.data
 
