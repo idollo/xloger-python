@@ -13,6 +13,20 @@ import logging
 import sys
 
 
+filter_log = logging.getLogger("xloger_filter_worker")
+formatter = logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+filter_log_handler = logging.StreamHandler(stream=sys.stdout)
+filter_log_handler.setFormatter(formatter)
+filter_log.addHandler(filter_log_handler)
+filter_log.setLevel(logging.DEBUG)
+
+filter_err = logging.getLogger("xloger_filter_worker_error")
+filter_err_handler = logging.StreamHandler(stream=sys.stderr)
+filter_err_handler.setFormatter(formatter)
+filter_err.addHandler(filter_err_handler)
+filter_err.setLevel(logging.DEBUG)
+
+
 class XLogerConnector(TcpConnector):
     def sendall(self, data, flags=0):
         return self._s.send(data, flags)
@@ -38,31 +52,18 @@ class XLogerClient(object):
 
     @classmethod
     def start_filter_worker(cls, host, port, filter_backend='file:///tmp/xloger.filter', retry=0):
-        logger = logging.getLogger("xloger_filter_worker")
-        formatter = logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        stdout_handler = logging.StreamHandler(stream=sys.stdout)
-        stdout_handler.setFormatter(formatter)
-        logger.addHandler(stdout_handler)
-        logger.setLevel(logging.DEBUG)
-
-        stderr = logging.getLogger("xloger_filter_worker_error")
-        stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        stderr_handler.setFormatter(formatter)
-        stderr.addHandler(stderr_handler)
-        stderr.setLevel(logging.DEBUG)
-
         receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             receiver.connect((host, port))
         except socket.error as err:
             receiver.setblocking(0)
             receiver.close()
-            stderr.warn("Connect to XLoger Server (%s:%s) Failed: [%s] %s" % (host, port, err[0], err[1]))
+            filter_err.warn("Connect to XLoger Server (%s:%s) Failed: [%s] %s" % (host, port, err[0], err[1]))
             sleep(3)
             cls.start_filter_worker(host, port, filter_backend, retry+1)
             return
 
-        logger.info("XLoger Server (%s:%s) Connected." % (host, port))
+        filter_log.info("XLoger Server (%s:%s) Connected." % (host, port))
         cls.filter_backend = filter_backend
         # non-blocking
         receiver.setblocking(0)
@@ -70,7 +71,7 @@ class XLogerClient(object):
         receiver.send(json.dumps(data)+'\n')
 
         def reconnect():
-            logger.info("Reconnecting XLoger Server (%s:%s)." % (host, port))
+            filter_log.info("Reconnecting XLoger Server (%s:%s)." % (host, port))
             cls.dispatch_filter(dict())
             receiver.close()
             sleep(3)
@@ -118,11 +119,11 @@ class XLogerClient(object):
         try:
             data = json.loads(data)
         except Exception as e:
-            warnings.warn("Invalid data recieved.")
+            stderr.error("Invalid data recieved.")
             return
         action, data = data.get("action", None), data.get("data", None)
         if not action or not isinstance(data, dict):
-            warnings.warn("Invalid data recieved.")
+            stderr.error("Invalid data recieved.")
             return
         cls.dispatch(action, data)
 
@@ -137,11 +138,13 @@ class XLogerClient(object):
         if backend.startswith("file://"):
             try:
                 filter_file_name = backend[7:]
+                filter_str = json.dumps(filter)
                 f = open(filter_file_name, "w+")
-                f.write(json.dumps(filter))
+                f.write(filter_str)
                 f.close()
+                filter_log.info("Filter Updated: %s" % filter_str);
             except Exception as e:
-                warnings.warn("Failed to Write Xloger backend: %s" % e.message)
+                filter_err.error("Failed to Write Xloger backend: %s" % e.message)
 
     @classmethod
     def filter(cls):
