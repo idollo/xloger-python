@@ -9,6 +9,8 @@ import random
 import json
 import warnings
 import os
+import logging
+import sys
 
 
 class XLogerConnector(TcpConnector):
@@ -36,11 +38,25 @@ class XLogerClient(object):
 
     @classmethod
     def start_filter_worker(cls, host, port, filter_backend='file:///tmp/xloger.filter', retry=0):
+        logger = logging.getLogger("xloger_filter_worker")
+        formatter = logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        stdout_handler = logging.StreamHandler(stream=sys.stdout)
+        stdout_handler.setFormatter(formatter)
+        logger.addHandler(stdout_handler)
+        logger.setLevel(logging.DEBUG)
+
+        stderr = logging.getLogger("xloger_filter_worker_error")
+        stderr_handler = logging.StreamHandler(stream=sys.stderr)
+        stderr_handler.setFormatter(formatter)
+        stderr.addHandler(stderr_handler)
+        stderr.setLevel(logging.DEBUG)
+
 
         try:
             receiver = socket.create_connection((host, port))
+            logger.info("XLoger Server (%s:%s) Connected." % (host, port))
         except socket.error as err:
-            warnings.warn("Connect to XLoger Server Failed: [%s] %s" % (err[0], err[1]))
+            stderr.warn("Connect to XLoger Server (%s:%s) Failed: [%s] %s" % (host, port, err[0], err[1]))
             sleep(3)
             cls.start_filter_worker(host, port, filter_backend, retry+1)
             return
@@ -52,6 +68,7 @@ class XLogerClient(object):
         receiver.send(json.dumps(data)+'\n')
 
         def reconnect():
+            logger.info("Reconnecting XLoger Server (%s:%s)." % (host, port))
             cls.dispatch_filter(dict())
             receiver.close()
             sleep(3)
