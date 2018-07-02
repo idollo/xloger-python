@@ -52,7 +52,7 @@ class XLogerClient(object):
         receiver.send(json.dumps(data)+'\n')
 
         def reconnect():
-            cls.dispatch_filter(dict()):
+            cls.dispatch_filter(dict())
             receiver.close()
             sleep(3)
             cls.start_filter_worker(host, port, filter_backend)
