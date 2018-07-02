@@ -51,16 +51,18 @@ class XLogerClient(object):
         stderr.addHandler(stderr_handler)
         stderr.setLevel(logging.DEBUG)
 
-
+        receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            receiver = socket.create_connection((host, port))
-            logger.info("XLoger Server (%s:%s) Connected." % (host, port))
+            receiver.connect((host, port))
         except socket.error as err:
+            receiver.setblocking(0)
+            receiver.close()
             stderr.warn("Connect to XLoger Server (%s:%s) Failed: [%s] %s" % (host, port, err[0], err[1]))
             sleep(3)
             cls.start_filter_worker(host, port, filter_backend, retry+1)
             return
 
+        logger.info("XLoger Server (%s:%s) Connected." % (host, port))
         cls.filter_backend = filter_backend
         # non-blocking
         receiver.setblocking(0)
