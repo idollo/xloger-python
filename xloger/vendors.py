@@ -98,6 +98,8 @@ class FlaskXLoger(XLogerBase):
             return request.xloger_watched
 
         tdata = getattr(request, 'xloger_thread_data', self.thread_data())
+        if not isinstance(tdata, dict):
+            tdata = dict()
         filter = self.client.filter()
         filters = filter.get("list", [])
         server_mention = filter.get("server_mention", False)
@@ -108,6 +110,8 @@ class FlaskXLoger(XLogerBase):
             fkeys = f.items()
             for k, v in fkeys:
                 exp = v.replace(".", '\.').replace("*", ".*").replace("/", "\/");
+                if not exp:
+                    continue
                 rex = re.compile(exp, re.IGNORECASE)
                 k = k.lower()
                 if k == "serverip":
@@ -116,26 +120,26 @@ class FlaskXLoger(XLogerBase):
                         break
 
                 if k == "clientip":
-                    if not rex.match(tdata['clientIP']):
+                    if not rex.match(tdata.get('clientIP', '')):
                         single_watched = False
                         break
 
                 if k == "host":
-                    if not rex.match(tdata['host']):
+                    if not rex.match(tdata.get('host', '')):
                         single_watched = False
                         break
 
                 if k == "useragent":
-                    if not rex.match(tdata['userAgent']):
+                    if not rex.match(tdata.get('userAgent','')):
                         single_watched = False
                         break
 
                 if k == "httpmethod":
-                    if not rex.match(tdata['httpMethod']):
+                    if not rex.match(tdata.get('httpMethod', '')):
                         single_watched = False
                         break
                 if k == "requesturi":
-                    if not rex.match(tdata['requestURI']):
+                    if not rex.match(tdata.get('requestURI', '')):
                         single_watched = False
                         break
             if len(fkeys) == 0:
