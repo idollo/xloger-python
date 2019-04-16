@@ -142,7 +142,7 @@ class XLogerClient(object):
                 f = open(filter_file_name, "w+")
                 f.write(filter_str)
                 f.close()
-                filter_log.info("Filter Updated: %s" % filter_str);
+                filter_log.info("Filter Updated: %s" % filter_str)
             except Exception as e:
                 filter_err.error("Failed to Write Xloger backend: %s" % e.message)
 
